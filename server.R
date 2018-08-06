@@ -1,108 +1,75 @@
 library(shiny)
+source('function.R', local = TRUE)
 
-#options(shiny.maxRequestSize = 1000*1024^2)
-
-shinyServer(function(input, output, session) {
- 
-  ## Input text of keywords##
-  interms <- reactive({
-    input$update1
-    isolate({ input$selection })
-  }) 
-  ## Input text of File ##
-  fileterms <- reactive({
-   input$update1
-  isolate ({
-    
-  inFile <- input$file1
-  if (is.null(inFile))
-    return(NULL)
+shinyServer(function(input,output) {
   
-    read.delim(inFile$datapath, header = FALSE, sep="\t")
-             
+  mydataL <- reactive({
+    Names<-c("TRADE.DATE","EXP.DATE","COMMODITY","OPTION","POSITION","LOT","ASSIGN_3MLME","STRIKE.PRICE","UNDERLYING_PRICE","DELTA_EQ","BROKER","VOLATILITY","INT_RATE","DIVIDEND","CURRENT_3MLME","TIMES","VARA","VARB","VARC","VARD","VARE","VARF","VARG","VARH","a","b","CALL_PRICE","PUT_PRICE")
+    if(input$action == 0)
+      return(mydataRead())
+    else
+      isolate({
+        orig.date1<-as.Date(input$date1,origin = "1900-01-01")
+        orig.date2<-as.Date(input$date2,origin = "1900-01-01")
+        new.date1<-as.character(format(orig.date1, format=c("%Y-%m-%d")))
+        new.date2<-as.character(format(orig.date2, format=c("%Y-%m-%d")))
+        t <- TIMES
+        vara <- VARA
+        varb <- VARB
+        varc <- VARC
+        vard <- VARD
+        vare <- VARE
+        varf <- VARF
+        varg <- VARG
+        varh <- VARH
+        aa <- a
+        bb <- b
+        cp <- CALL_PRICE 
+        pp <- PUT_PRICE
+        t = (-1)*(as.numeric(difftime(Sys.Date(),as.POSIXlt(input$date2),units="days")))/365
+        varb = input$vol*(sqrt(t))
+        vara = t*(input$int-input$div+((input$vol*input$vol)/2))
+        varc = ((log((input$s/input$num2),base = exp(1)))+vara)/varb
+        vard = varc+((-1)*varb)
+        vare = pnorm(varc,mean=0,sd=1)
+        varf = pnorm(vard,mean=0,sd=1)
+        aa = pnorm((-1*vard),mean=0,sd=1)
+        bb = pnorm((-1*varc),mean=0,sd=1)
+        varg = input$num2*(exp((-1)*input$int*t))
+        varh = input$s*(exp((-1)*input$div*t))
+        cp = (varh*vare)-(varg*varf)
+        pp = (varg*aa)-(varh*bb)
+        newentry<-list(new.date1,new.date2,input$checkGroup,input$select1,input$select2,input$num5,input$num6,input$num2,input$s,input$num4,input$text,input$vol,input$int,input$div,input$num1,t,vara,varb,varc,vard, vare,varf,varg,varh,aa,bb,cp,pp)
+        
+        if (input$sel == "ins") 
+          newRow(mydataRead(),newentry,Names)
+        if (input$sel == "cha")
+          changeRow(mydataRead(),newentry,input$R)
+        if (input$sel == "del-las")
+          deleteLastRow(mydataRead())
+        if (input$sel == "del-a")
+          deleteARow(mydataRead(),input$R)
+        di<-mydataRead()
+        return(di)
       })
-  }) 
-  
-## Text Analysis algorithm ##  
-  terms <- reactive({
-   input$update
+     })
+  observe({
+    if(input$refresh==0) return(NULL)
+    else
     isolate({
-      withProgress({
-        setProgress(message = "Processing corpus...")
-        getTerm(input$selection)
-      })
-    })
+  
+      invalidateLater(10000, session)
+    }) 
   }) 
-  
-  terms1 <- reactive({
-    input$update
-    isolate({
-      withProgress({
-        setProgress(message = "Processing corpus...")
-        getTerm(fileterms())
-      })
-    })
+  output$DATA<- renderTable({
+    mydataL()
   })
-## Checkbox updating ##
-   observe({
-     if(input$sel == "selection"){
-    ch <- names(terms()) 
-    cho <- as.vector(ch, mode = "character")
-    if(input$update == 1)
-    { updateCheckboxGroupInput(session, "check", choices = cho,
-                               selected = "" )  } }
-    else if (input$sel == "file1"){
-      ch <- names(terms1()) 
-    cho <- as.vector(ch, mode = "character")
-    if(input$update == 1)
-    { updateCheckboxGroupInput(session, "check", choices = cho,
-                               selected = "" )  } }  
-      
-      })
-   
-## Adding selected keywords from checkbox to list ##  
-  addterms <- reactive ({        
-    input$update2
-    isolate({ input$check })
-  })
- 
-  ## If action is file upload, then fileinput, else words input ## 
-  observe ({
-  if (input$sel == "file1") 
-  
-  output$data1 <- renderTable({
-    fileterms()
-  })
- else  if (input$sel == "selection") 
- 
-  output$data1 <- renderText({
-  interms()
-})
-  })
-  
-  #output$data <- renderText({
-   # v <- terms()
-    #x <- names(v) 
-  #})
-  
- output$data2 <- renderText ({
-   addterms()
-  })
- observe({
-   input$refresh
-   isolate
-   { invalidateLater(1000 * 60 * 5, session)}
-   })
-   
-   
-  ## Download words and save to csv ## 
   output$downloadData <- downloadHandler(
-    filename = function() { paste(input$check, '.csv', sep='') },
+    filename = function() { paste(input$sel, '.csv', sep='') },
     content = function(file) {
-      write.csv(addterms(), file = "Keywords.csv", row.names=FALSE)
+      write.csv(mydataL(), file, row.names=FALSE)
     }
-  )  
+  )
   
   
-}) 
-
+})

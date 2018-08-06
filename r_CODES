@@ -1,0 +1,50 @@
+
+##READING A CSV FILE##
+data <- read.csv("C:/Users/debapriyag@icrakpo.com/Desktop/specdata/hw1_data.csv")
+
+##MISSING VALUES##
+mis <- is.na(Column name)
+n(mis)
+sum(mis)
+mean(Ozone, na.rm = TRUE)
+
+##CONDITIONAL SUBSETTING##
+new.data <- data[ which( Ozone > 31 | Temp > 90) , ] [OR]
+new.data <- data[ which( Ozone > 31 & Temp > 90) , ] [AND]
+newdata <- data[ which( Month == 6),] 
+tail(data, 2)((---last 2 rows of a data))
+
+
+##USER-DEFINED FUNCION##
+Func  <- function(x,sum,print =  TRUE){
+ sum = 10 + x;
+ return(sum)}
+dput(Func,  file = "C:/Users/debapriyag@icrakpo.com/Desktop/function.R")
+setwd("C:/Users/debapriyag@icrakpo.com/Desktop"
+source("function.R")
+
+
+##READING THE FILES IN A FOLDER (CURRENT WORKING DIRECTORY)##
+files <- (Sys.glob("*.csv"))
+ldf <- lapply(files, read.csv)
+ldf
+
+## Summary of all the files in the folder###?
+res <- lapply(ldf, summary)
+
+## Extracting all the filenames ##
+names(res) <- substr(files, 1, 30)
+names(res)
+
+length(unique(ARN_Code))   ## number of unique members of a col ##
+mis <- is.na(T15_B15)
+sum(mis)    ##find number of missing values in a col##
+
+##find which cols have missing value ##
+names(which(colSums(is.na(data))>0))
+
+length(data)  ##give number of columns in data##
+nrow(data)    ## number of rows in a data ## 
+    
+    
+   

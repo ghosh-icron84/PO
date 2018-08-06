@@ -1,0 +1,52 @@
+ui
+
+library(shiny)
+fluidPage(
+  
+  titlePanel(h3("Highlight key words")),
+  
+  sidebarLayout(
+    
+    sidebarPanel(
+      textInput("text", label = h3("Text Input"), value = words),
+                
+      actionButton("update", "Submit")
+                ),
+    
+    mainPanel(
+      tabsetPanel(id="tab1",
+                  tabPanel(tags$b("Output"), textOutput("data"))
+    )
+  )
+)
+)
+
+
+
+server
+
+library(shiny)
+
+function(input, output, session) {
+  terms <- reactive({
+  input$update
+  isolate({
+    input$text
+    })
+  })
+
+
+
+  
+ output$data <- renderText({
+    terms()
+  })
+ 
+}
+
+Global
+
+words <- character(1000L)
+
+
+
